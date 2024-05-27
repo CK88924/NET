@@ -1,0 +1,2 @@
+# NET
+ FLASK BLAZOR DATA AND 辨識

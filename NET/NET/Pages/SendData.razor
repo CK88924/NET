@@ -1,0 +1,23 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+
+@page "/send-data"
+@inject DataService DataService
+
+<h3>Send Data to Flask</h3>
+
+<input @bind="inputData" placeholder="Enter data to send" />
+<button @onclick="SendDataToFlask">Send Data</button>
+
+<p>@responseMessage</p>
+
+@code {
+    private string inputData;
+    private string responseMessage;
+
+    private async Task SendDataToFlask()
+    {
+        var data = new { Message = inputData };
+        responseMessage = await DataService.SendDataAsync(data);
+    }
+}

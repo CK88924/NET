@@ -1,0 +1,60 @@
+﻿@page "/image-processing"
+@using System.IO
+@using System.Linq
+@using System.Threading.Tasks
+@using Microsoft.AspNetCore.Components.Forms
+@inject NET.Data.ImageProcessingService ImageProcessingService
+
+<h3>Image Processing</h3>
+
+<InputFile OnChange="HandleSelectedFiles" multiple />
+<button @onclick="ProcessImages">Process Images</button>
+
+<ul>
+    @foreach (var path in processedImages)
+    {
+            <li>@path</li>
+    }
+</ul>
+
+<p>@statusMessage</p>
+
+@code {
+    private IBrowserFile[] selectedFiles;
+    private string statusMessage = string.Empty;
+    private List<string> processedImages = new();
+    private long maxFileSize = 1073741824; // 1G
+
+    private void HandleSelectedFiles(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles().ToArray();
+    }
+
+    private async Task ProcessImages()
+    {
+        if (selectedFiles == null || !selectedFiles.Any())
+        {
+            statusMessage = "No files selected.";
+            return;
+        }
+
+        processedImages.Clear();
+
+        foreach (var file in selectedFiles)
+        {
+            if (file.Size > maxFileSize)
+            {
+                statusMessage = $"File {file.Name} exceeds the maximum allowed size of {maxFileSize / 1024 / 1024}MB.";
+                continue;
+            }
+
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(maxFileSize).CopyToAsync(memoryStream);
+            memoryStream.Position = 0; // Reset the stream position to the beginning
+            var filePaths = await ImageProcessingService.ProcessImageAsync(memoryStream, file.Name);
+            processedImages.AddRange(filePaths);
+        }
+
+        statusMessage = "Images processed and saved.";
+    }
+}
